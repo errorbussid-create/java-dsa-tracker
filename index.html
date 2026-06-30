@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java & DSA Progress Tracker</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1a1a1e;
+            --text-color: #e1e1e6;
+            --primary: #04d361;
+            --accent: #8257e5;
+            --border: #29292e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        header {
+            grid-column: span 2;
+            text-align: center;
+            padding: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h1 { margin: 0; color: var(--primary); }
+        h2, h3 { color: var(--accent); }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        /* Checklist Styles */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .checklist-item input { margin-right: 10px; accent-color: var(--primary); }
+
+        /* Logger Styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: var(--primary);
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+
+        .day-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .log-entry {
+            border-left: 2px solid var(--accent);
+            padding-left: 10px;
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+        .timestamp { color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>☕ Java & DSA Journey Tracker</h1>
+        <p>Log your hours, check off algorithms, and watch your skills grow.</p>
+    </header>
+
+    <div class="panel">
+        <h3>DSA Roadmap</h3>
+        <div id="checklist">
+            <div class="checklist-item"><input type="checkbox" id="c1"><label for="c1">Java Basics & OOPs</label></div>
+            <div class="checklist-item"><input type="checkbox" id="c2"><label for="c2">Arrays & Strings</label></div>
+            <div class="checklist-item"><input type="checkbox" id="c3"><label for="c3">Linked Lists</label></div>
+            <div class="checklist-item"><input type="checkbox" id="c4"><label for="c4">Recursion & Backtracking</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="c5"><label for="c5">Stacks & Queues</label></div>
+            <div class="checklist-item"><input type="checkbox" id="c6"><label for="c6">Trees & Binary Search Trees</label></div>
+            <div class="checklist-item"><input type="checkbox" id="c7"><label for="c7">Graphs</label></div>
+            <div class="checklist-item"><input type="checkbox" id="c8"><label for="c8">Dynamic Programming</label></div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Log Today's Progress</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>Day Number</label>
+                <input type="number" id="dayNum" placeholder="e.g., 1">
+            </div>
+            <div class="form-group">
+                <label>LeetCode Problems Solved Today</label>
+                <input type="number" id="problemsSolved" placeholder="0">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>What did you do? (Include time stamps!)</label>
+            <textarea id="dayLogs" rows="4" placeholder="09:00 AM - Studied Array Inversion&#10;11:30 AM - Solved 3 LeetCode problems"></textarea>
+        </div>
+        <button onclick="saveLog()">Save to Journey</button>
+
+        <h2>Your Timeline</h2>
+        <div id="timeline"></div>
+    </div>
+
+    <script>
+        // Load data on page open
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTimeline();
+            loadChecklist();
+        });
+
+        function saveLog() {
+            const day = document.getElementById('dayNum').value;
+            const problems = document.getElementById('problemsSolved').value || 0;
+            const logs = document.getElementById('dayLogs').value;
+
+            if(!day || !logs) {
+                alert('Please fill in the Day and Logs!');
+                return;
+            }
+
+            let journal = JSON.parse(localStorage.getItem('javaDsaJournal')) || [];
+            
+            // Add or overwrite day
+            const existingDayIndex = journal.findIndex(item => item.day === day);
+            const entry = { day, problems, logs, date: new Date().toLocaleDateString() };
+
+            if(existingDayIndex > -1) {
+                journal[existingDayIndex] = entry;
+            } else {
+                journal.push(entry);
+            }
+
+            // Sort days numerically
+            journal.sort((a, b) => b.day - a.day);
+
+            localStorage.setItem('javaDsaJournal', JSON.stringify(journal));
+            
+            // Clear inputs
+            document.getElementById('dayNum').value = '';
+            document.getElementById('problemsSolved').value = '';
+            document.getElementById('dayLogs').value = '';
+
+            loadTimeline();
+        }
+
+        function loadTimeline() {
+            const timeline = document.getElementById('timeline');
+            const journal = JSON.parse(localStorage.getItem('javaDsaJournal')) || [];
+            
+            if(journal.length === 0) {
+                timeline.innerHTML = '<p style="color: #7c7c8a;">No logs yet. Start typing above!</p>';
+                return;
+            }
+
+            timeline.innerHTML = journal.map(item => `
+                <div class="day-card">
+                    <h3>Day ${item.day} <span style="font-size:0.7em; color:#7c7c8a;">(${item.date})</span></h3>
+                    <p><strong>🔥 LeetCode Problems:</strong> ${item.problems}</p>
+                    <div style="white-space: pre-line;">${item.logs}</div>
+                </div>
+            `).join('');
+        }
+
+        // Checklist persistence functions
+        document.querySelectorAll('#checklist input').forEach(box => {
+            box.addEventListener('change', () => {
+                let checkedStates = {};
+                document.querySelectorAll('#checklist input').forEach(b => {
+                    checkedStates[b.id] = b.checked;
+                });
+                localStorage.setItem('dsaChecklist', JSON.stringify(checkedStates));
+            });
+        });
+
+        function loadChecklist() {
+            let states = JSON.parse(localStorage.getItem('dsaChecklist')) || {};
+            for(let id in states) {
+                if(document.getElementById(id)) {
+                    document.getElementById(id).checked = states[id];
+                }
+            }
+        }
+    </script>
+</body>
+</html>
